@@ -19,7 +19,11 @@
 
 #define F2(progmem_ptr) (const __FlashStringHelper *)progmem_ptr
 
-int buttonPin = 4;
+int buttonMain = 4;
+int buttonRue = 0;
+int buttonMeduim = 1;
+int buttonHard = 2;
+int buttonYes = 3;
 
 RGBmatrixPanel matrix(A, B, C, D, CLK, LAT, OE, false, 64);
 
@@ -74,7 +78,7 @@ void setup() {
 
   Serial.begin(9600);
 
-  pinMode(buttonPin, INPUT);
+  pinMode(buttonMain, INPUT);
 }
 
 void loop() {
@@ -129,7 +133,7 @@ void loop() {
 }
 
 void buttonCheck(uint8_t w) {
-  if (digitalRead(buttonPin) == LOW && isPressable == true && isRunning == true)
+  if (digitalRead(buttonMain) == LOW && isPressable == true && isRunning == true)
   {
     overhang = abs(w-margin_l);
     block_width = block_width - overhang;
@@ -159,7 +163,7 @@ void buttonCheck(uint8_t w) {
     win();
   }
   
-  else if (digitalRead(buttonPin) == HIGH && isRunning == true)
+  else if (digitalRead(buttonMain) == HIGH && isRunning == true)
   {
     isPressable = true;
   }
