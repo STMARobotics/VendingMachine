@@ -28,9 +28,9 @@ int buttonYes = 3;
 RGBmatrixPanel matrix(A, B, C, D, CLK, LAT, OE, false, 64);
 
 bool to_right = true;
-int block_width = 16;
-int block_height = 2;
-int block_speed = 600;
+int block_width = 30;
+int block_height = 4;
+int block_speed = 950;
 int blockLevel = 0;
 bool isPressable = true;
 bool isRunning = true;
@@ -195,6 +195,7 @@ void crumble()
 
 void startGame()
 {
+  //setDifficulty(0);
   blockLevel = 0;
   block_width = bw_reset;
   margin_l = (32-block_width)/2;
@@ -251,4 +252,32 @@ void increaseLevel()
           return;
         }
     showScore();
+}
+
+void setDifficulty(int diff)
+{
+  if (diff == 0)
+  {
+    block_speed = block_speed- 960;
+    block_width = 16;
+    block_height = 4;
+  }
+  else if (diff == 1)
+  {
+    block_speed = block_speed- 960;
+    block_width = 14;
+    block_height = 2;
+  }
+  else if (diff == 2)
+  {
+    block_speed = block_speed- 975;
+    block_width = 10;
+    block_height = 2;
+  }
+  else if (diff == 3)
+  {
+    block_speed = block_speed- 990;
+    block_width = 8;
+    block_height = 1;
+  }
 }
