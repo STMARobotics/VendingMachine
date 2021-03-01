@@ -28,12 +28,12 @@ int buttonYes = 3;
 RGBmatrixPanel matrix(A, B, C, D, CLK, LAT, OE, false, 64);
 
 bool to_right = true;
-int block_width = 30;
-int block_height = 4;
-int block_speed = 950;
+int block_width = 8;
+int block_height = 1;
+int block_speed = 990;
 int blockLevel = 0;
 bool isPressable = true;
-bool isRunning = true;
+bool isRunning = false;
 
 int lastBW = 16;
 int lastX = 8;
@@ -47,7 +47,7 @@ int g1 = 0;
 int b1 = 7;
 
 int r2 = 7;
-int g2 = 7;
+int g2 = 4;
 int b2 = 0;
 
 int r = 0;
@@ -56,6 +56,18 @@ int b = 0;
 
 int bw_reset = 0;
 int letterDelay = 200;
+int diff = 0;
+
+int b_speed[] = {950, 960, 975, 990};
+int b_height[] = {4, 2, 2, 1};
+int b_width[] = {16, 14, 10, 8};
+
+int dc_r[] = {0, 0, 7, 7};
+int dc_g[] = {0, 7, 4, 0};
+int dc_b[] = {7, 0, 0, 0};
+int top_bar[] = {3, 1, 1, 1};
+
+int sw = 6; //stripe width
 
 const char endText[][10] PROGMEM = {"G", "A", "M", "E", "O", "V", "E", "R", "Y", "O", "U", "W", "I", "N"};
 const char scoreText[] PROGMEM = "LVL";
@@ -64,7 +76,7 @@ const char score[][10] PROGMEM = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "
 
 void setup() {
   
-  bw_reset = block_width;
+  bw_reset = b_width[diff];
   matrix.begin();
   matrix.setRotation(1);
   matrix.setTextWrap(true);
@@ -72,9 +84,8 @@ void setup() {
   randomSeed(analogRead(0));
   Serial.begin(9600);
   pinMode(buttonMain, INPUT);
-  block_speed = 1000 - block_speed;
-
-  startGame();
+  splash();
+  //startGame();
 }
 
 void loop() {
@@ -82,12 +93,12 @@ void loop() {
   {
     if (to_right == true)
     {
-      matrix.fillRect(block_width, 64 - (block_height*2) - (blockLevel * block_height), 1, block_height,  matrix.Color333(0, 0, 0));
-      for (uint8_t w = 0; w < 33 - block_width; w++)
+      matrix.fillRect(b_width[diff], 64 - (b_height[diff]*2) - (blockLevel * b_height[diff]), 1, b_height[diff],  matrix.Color333(0, 0, 0));
+      for (uint8_t w = 0; w < 33 - b_width[diff]; w++)
       {
-        matrix.fillRect(w, 64 - (block_height*2) - (blockLevel * block_height), block_width, block_height, matrix.Color333(r,g,b));
+        matrix.fillRect(w, 64 - (b_height[diff]*2) - (blockLevel * b_height[diff]), b_width[diff], b_height[diff], matrix.Color333(r,g,b));
         
-        matrix.fillRect(w - 1,  64 - (block_height*2) - (blockLevel * block_height), 1, block_height, matrix.Color333(0, 0, 0));
+        matrix.fillRect(w - 1,  64 - (b_height[diff]*2) - (blockLevel * b_height[diff]), 1, b_height[diff], matrix.Color333(0, 0, 0));
         buttonCheck(w);
         delay(block_speed);
       }
@@ -96,11 +107,11 @@ void loop() {
     
     else 
     {
-      for (uint8_t w = 31-block_width; w > 0; w = w - 1)
+      for (uint8_t w = 31-b_width[diff]; w > 0; w = w - 1)
       { 
-        matrix.fillRect(w, 64 - (block_height*2) - (blockLevel * block_height), block_width, block_height, matrix.Color333(r,g,b));
+        matrix.fillRect(w, 64 - (b_height[diff]*2) - (blockLevel * b_height[diff]), b_width[diff], b_height[diff], matrix.Color333(r,g,b));
       
-        matrix.fillRect(w+block_width, 64 - (block_height*2) - (blockLevel * block_height), 1, block_height,  matrix.Color333(0, 0, 0));
+        matrix.fillRect(w+b_width[diff], 64 - (b_height[diff]*2) - (blockLevel * b_height[diff]), 1, b_height[diff],  matrix.Color333(0, 0, 0));
         buttonCheck(w);
         delay(block_speed);
         
@@ -114,22 +125,22 @@ void buttonCheck(uint8_t w) {
   if (digitalRead(buttonMain) == LOW && isPressable == true && isRunning == true)
   {
     overhang = abs(w-margin_l);
-    block_width = block_width - overhang;
+    b_width[diff] = b_width[diff] - overhang;
     if (w > margin_l)
     {
-      matrix.fillRect(margin_r-1, 64 - (block_height*2) - (blockLevel * block_height), overhang, block_height, matrix.Color333(0,0,0));
+      matrix.fillRect(margin_r-1, 64 - (b_height[diff]*2) - (blockLevel * b_height[diff]), overhang, b_height[diff], matrix.Color333(0,0,0));
       margin_l = w;
     }
 
     else if (w != margin_l)
     {
-      matrix.fillRect(margin_l - overhang, 64 - (block_height*2) - (blockLevel * block_height), overhang, block_height, matrix.Color333(0,0,0));
-      margin_r = w + block_width + overhang + 1;
+      matrix.fillRect(margin_l - overhang, 64 - (b_height[diff]*2) - (blockLevel * b_height[diff]), overhang, b_height[diff], matrix.Color333(0,0,0));
+      margin_r = w + b_width[diff] + overhang + 1;
     }
     increaseLevel();
   }
   
-  if (blockLevel > (54 / block_height) - 2)
+  if (blockLevel > (54 / b_height[diff]) - 2)
   {
     win();
   }
@@ -161,7 +172,7 @@ void gameOver()
   }
   delay(3000);
   crumble();
-  startGame();
+  splash();
 }
 
 void win()
@@ -180,7 +191,7 @@ void win()
   }
   delay(3000);
   crumble();
-  startGame();
+  splash();
 }
 
 void crumble()
@@ -197,17 +208,18 @@ void startGame()
 {
   //setDifficulty(0);
   blockLevel = 0;
-  block_width = bw_reset;
-  margin_l = (32-block_width)/2;
-  margin_r = margin_l + block_width + 1;
+  block_speed = 1000 - b_speed[diff];
+  b_width[diff] = bw_reset;
+  margin_l = (32-b_width[diff])/2;
+  margin_r = margin_l + b_width[diff] + 1;
   overhang = 0;
   isRunning = true;
-  matrix.fillRect(margin_l, 64 - block_height, block_width, block_height, matrix.Color333(r1,g1,b1));
+  matrix.fillRect(margin_l, 64 - b_height[diff], b_width[diff], b_height[diff], matrix.Color333(r1,g1,b1));
   r = r2;
   g = g2;
   b = b2;
   showScore();
-  matrix.fillRect(0, 9, 32, 1, matrix.Color333(7, 7, 7));
+  matrix.fillRect(0, 9, 32, top_bar[diff], matrix.Color333(dc_r[diff], dc_g[diff], dc_b[diff]));
 }
 
 void showText(int x, int y, int s, int text, int r, int g, int b)
@@ -221,7 +233,7 @@ void showText(int x, int y, int s, int text, int r, int g, int b)
 void showScore()
 {
   matrix.setTextSize(1);
-  matrix.setTextColor(matrix.Color333(7,7,7));
+  matrix.setTextColor(matrix.Color333(dc_r[diff], dc_g[diff], dc_b[diff]));
   matrix.setCursor(1, 1);
   matrix.print(F2(scoreText));
   matrix.fillRect(20,1,15,7, matrix.Color333(0,0,0));
@@ -246,7 +258,7 @@ void increaseLevel()
       b = b2;
     }
      
-    if (block_width < 1)
+    if (b_width[diff] < 1)
         {
           gameOver();
           return;
@@ -254,30 +266,127 @@ void increaseLevel()
     showScore();
 }
 
-void setDifficulty(int diff)
+void setDifficulty(int d)
 {
-  if (diff == 0)
+  diff = d-1;
+}
+
+void splash()
+{
+
+  //FILL WHITE
+  matrix.fillScreen(matrix.Color333(0,0,3));
+  
+  //WING 7-LEFT
+  matrix.fillRect(1, 19, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(2, 19, 1, 2, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(3, 19, 1, 3, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(4, 19, 8, 4, matrix.Color333(r2,g2,b2));
+  
+  //WING 7-RIGHT
+  matrix.fillRect(30, 19, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(29, 19, 1, 2, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(28, 19, 1, 3, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(20, 19, 8, 4, matrix.Color333(r2,g2,b2));
+  
+  //WING 0-LEFT
+  matrix.fillRect(3, 26, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(4, 26, 1, 2, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(5, 26, 1, 3, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(6, 26, 6, 4, matrix.Color333(r2,g2,b2));
+  
+  //WING 0-RIGHT
+  matrix.fillRect(28, 26, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(27, 26, 1, 2, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(26, 26, 1, 3, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(20, 26, 6, 4, matrix.Color333(r2,g2,b2));
+
+  //WING 2-LEFT
+  matrix.fillRect(5, 33, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(6, 33, 1, 2, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(7, 33, 1, 3, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(8, 33, 4, 4, matrix.Color333(r2,g2,b2));
+  
+  //WING 2-RIGHT
+  matrix.fillRect(26, 33, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(25, 33, 1, 2, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(24, 33, 1, 3, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(20, 33, 4, 4, matrix.Color333(r2,g2,b2));
+
+  //WING 8-LEFT
+  matrix.fillRect(8, 40, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(9, 40, 1, 2, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(10, 40, 1, 3, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(11, 40, 1, 4, matrix.Color333(r2,g2,b2));
+  
+  //WING 8-RIGHT
+  matrix.fillRect(23, 40, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(22, 40, 1, 2, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(21, 40, 1, 3, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(20, 40, 1, 4, matrix.Color333(r2,g2,b2));
+
+  //7
+  matrix.fillRect(13, 18, 5, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(18, 19, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(17, 20, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(16, 21, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(15, 22, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(14, 23, 1, 1, matrix.Color333(r2,g2,b2));
+
+  //0
+  matrix.fillRect(14, 25, 4, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(14, 30, 4, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(13, 26, 1, 4, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(18, 26, 1, 4, matrix.Color333(r2,g2,b2));
+  
+  //2
+  matrix.fillRect(14, 32, 4, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(13, 33, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(18, 33, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(17, 34, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(14, 35, 3, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(13, 36, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(13, 37, 6, 1, matrix.Color333(r2,g2,b2));
+
+  //8
+  matrix.fillRect(14, 39, 4, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(13, 40, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(18, 40, 1, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(14, 41, 4, 1, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(13, 42, 1, 2, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(18, 42, 1, 2, matrix.Color333(r2,g2,b2));
+  matrix.fillRect(14, 44, 4, 1, matrix.Color333(r2,g2,b2));
+
+  //STRIPE
+
+while(!isRunning)
+{
+  for (int k = 0; k < 12; k++)
   {
-    block_speed = block_speed- 960;
-    block_width = 16;
-    block_height = 4;
+    for (int g = 0; g < 5; g ++)
+    {
+      for (int i = 0; i < 14; i ++)
+      {
+        matrix.fillRect((g*sw*2)-i-k, i, sw, 1, matrix.Color333(0,0,3));
+        matrix.fillRect((g*sw*2)-i-k+sw, i, sw, 1, matrix.Color333(7,4,0));
+        
+        matrix.fillRect((g*sw*2)+i+k-26, i+50, sw, 1, matrix.Color333(0,0,3));
+        matrix.fillRect((g*sw*2)+i+k+sw-26, i+50, sw, 1, matrix.Color333(7,4,0));
+        if (digitalRead(buttonMain) == LOW)
+        {
+          isRunning = true;
+          matrix.fillScreen(matrix.Color333(0,0,0));
+          delay(2000);
+          startGame();
+          return;
+        }
+       }
+    }
+    delay(1);
   }
-  else if (diff == 1)
-  {
-    block_speed = block_speed- 960;
-    block_width = 14;
-    block_height = 2;
-  }
-  else if (diff == 2)
-  {
-    block_speed = block_speed- 975;
-    block_width = 10;
-    block_height = 2;
-  }
-  else if (diff == 3)
-  {
-    block_speed = block_speed- 990;
-    block_width = 8;
-    block_height = 1;
-  }
+}
+  
+
+    
+  
 }
