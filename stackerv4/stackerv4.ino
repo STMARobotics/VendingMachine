@@ -79,7 +79,10 @@ int top_bar[] = {3, 1, 1, 1};
 
 int sw = 6; //stripe width
 int playerScore = 0;
+int lastPlayerScore = 0;
 int wallBounces = 0;
+
+bool winGame = false;
 
 const char endText[][10] PROGMEM = {"G", "A", "M", "E", "O", "V", "E", "R", "Y", "O", "U", "W", "I", "N"};
 const char scoreText[] PROGMEM = "LVL";
@@ -209,6 +212,7 @@ void gameOver()
 
 void win()
 {
+  winGame = true;
   for (uint8_t i = 10; i <64; i++)
   {
     matrix.fillRect(0, i,32,  1,matrix.Color333(0,0,7));
@@ -239,8 +243,10 @@ void crumble()
 
 void startGame(int d)
 {
+  winGame = false;
   setDifficulty(d);
   playerScore = 0;
+  lastPlayerScore = 0;
   wallBounces = 0;
   
   for (int i = 0; i < 4; i ++)
@@ -296,19 +302,18 @@ int extractDigit(int V, int P)
 
 void showScore()
 {
-
-  matrix.fillRect(0,0,32,9,matrix.Color333(0,0,0));
+  lastPlayerScore = playerScore;
   matrix.setTextSize(1);
   matrix.setTextColor(matrix.Color333(dc_r[diff], dc_g[diff], dc_b[diff]));
 
-  if (!isRunning)
+  if (!isRunning && winGame)
   {
-    playerScore = playerScore * (1 + (block_width * 0.1));
+    playerScore = playerScore * (1 + (block_width * 0.05));
   }
 
   else
   {
-    playerScore = (blockLevel * (diff + 1) * 10) - (wallBounces);
+    playerScore = (blockLevel * (diff + 1) * 337) - ((wallBounces-blockLevel)*5);
   }
 
   if (playerScore < 0)
@@ -316,10 +321,14 @@ void showScore()
     playerScore = 0;
   }
 
-  for (int i = 0; i < 4; i++)
+  for (int i = 0; i < 5; i++)
   {
      matrix.setCursor(1 + (i  * 6), 1);
-     matrix.print(F2(digits[extractDigit(playerScore,4-i)]));
+     if(digits[extractDigit(lastPlayerScore,5-i)] != digits[extractDigit(playerScore,5-i)])
+     {
+      matrix.fillRect(1 + (i  * 6), 1, 6, 8,matrix.Color333(0,0,0));
+      matrix.print(F2(digits[extractDigit(playerScore,5-i)]));
+     }
      
   }
  
@@ -335,6 +344,15 @@ void showScore()
 
 void increaseLevel()
 {
+  if (b_width[diff] < 1)
+    {
+      gameOver();
+      return;
+    }
+   if (blockLevel == 0)
+   {
+    wallBounces = 0;
+   }
    blockLevel = blockLevel + 1;
    if(blockLevel % 2 == 1)
     {
@@ -350,11 +368,6 @@ void increaseLevel()
       b = b2;
     }
      
-    if (b_width[diff] < 1)
-        {
-          gameOver();
-          return;
-        }
     showScore();
 }
 
