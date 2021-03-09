@@ -68,7 +68,7 @@ int letterDelay = 200;
 int diff = 3;
 int diffSpacing = 7;
 
-int b_speed[] = {950, 960, 975, 990};
+int b_speed[] = {950, 900/*960*/, 975, 990};
 int b_height[] = {4, 2, 2, 1};
 int b_width[] = {16, 14, 10, 8};
 
@@ -77,9 +77,11 @@ int dc_g[] = {0, 7, 4, 0};
 int dc_b[] = {7, 0, 0, 0};
 int top_bar[] = {3, 1, 1, 1};
 
+int scoreWeights[] = {4630, 1131, 855, 331};
+
 int sw = 6; //stripe width
-int playerScore = 0;
-int lastPlayerScore = 0;
+long playerScore = 0L;
+long lastPlayerScore =11111L;
 int wallBounces = 0;
 
 bool winGame = false;
@@ -125,7 +127,7 @@ void loop() {
     if (to_right == true)
     {
       matrix.fillRect(b_width[diff], 64 - (b_height[diff]*2) - (blockLevel * b_height[diff]), 1, b_height[diff],  matrix.Color333(0, 0, 0));
-      for (uint8_t w = 0; w < 33 - b_width[diff]; w++)
+      for (int w = 1; w < 33 - b_width[diff]; w++)
       {
         matrix.fillRect(w, 64 - (b_height[diff]*2) - (blockLevel * b_height[diff]), b_width[diff], b_height[diff], matrix.Color333(r,g,b));
         
@@ -134,13 +136,13 @@ void loop() {
         delay(block_speed);
       }
       wallBounces++;
-      showScore();
+      showScore(false);
       to_right = false;
     }
     
     else 
     {
-      for (uint8_t w = 31-b_width[diff]; w > 0; w = w - 1)
+      for (int w = 31-b_width[diff]; w >= 0; w = w - 1)
       { 
         matrix.fillRect(w, 64 - (b_height[diff]*2) - (blockLevel * b_height[diff]), b_width[diff], b_height[diff], matrix.Color333(r,g,b));
       
@@ -149,7 +151,7 @@ void loop() {
         delay(block_speed);
       }
       wallBounces++;
-      showScore();
+      showScore(false);
       to_right = true;
     }
   }
@@ -198,7 +200,7 @@ void gameOver()
     delay(1);
   }
   isRunning = false;
-  showScore();
+  showScore(false);
 
   for(int i = 0; i < 8; i++)
   {
@@ -219,7 +221,7 @@ void win()
     delay(1);
   }
   isRunning = false;
-  showScore();
+  showScore(false);
 
   for(int i = 0; i < 6; i++)
   {
@@ -245,8 +247,8 @@ void startGame(int d)
 {
   winGame = false;
   setDifficulty(d);
-  playerScore = 0;
-  lastPlayerScore = 0;
+  playerScore = 0L;
+  lastPlayerScore = 0L;
   wallBounces = 0;
   
   for (int i = 0; i < 4; i ++)
@@ -279,11 +281,11 @@ void startGame(int d)
   margin_r = margin_l + b_width[diff] + 1;
   overhang = 0;
   isRunning = true;
+  showScore(true);
   matrix.fillRect(margin_l, 64 - b_height[diff], b_width[diff], b_height[diff], matrix.Color333(r1,g1,b1));
   r = r2;
   g = g2;
   b = b2;
-  showScore();
   matrix.fillRect(0, 9, 32, top_bar[diff], matrix.Color333(dc_r[diff], dc_g[diff], dc_b[diff]));
 }
 
@@ -295,51 +297,43 @@ void showText(int x, int y, int s, int text, int r, int g, int b)
   matrix.print(F2(endText[text]));
 }
 
-int extractDigit(int V, int P)
+long extractDigit(long V, int P)
 {
-  return int(V/(pow(10,P-1))) - int(V/(pow(10,P)))*10; 
+  return long(V/(pow(10,P-1))) - long(V/(pow(10,P)))*10; 
 }
 
-void showScore()
+void showScore(bool force)
 {
-  lastPlayerScore = playerScore;
+  lastPlayerScore = long(playerScore);
   matrix.setTextSize(1);
   matrix.setTextColor(matrix.Color333(dc_r[diff], dc_g[diff], dc_b[diff]));
 
   if (!isRunning && winGame)
   {
-    playerScore = playerScore * (1 + (block_width * 0.05));
+    playerScore = long(playerScore *(1L+ long(block_width) * 0.05L));
   }
 
   else
-  {
-    playerScore = (blockLevel * (diff + 1) * 337) - ((wallBounces-blockLevel)*5);
+  { // maxscore = 99999 
+    //
+    playerScore = long((long(blockLevel) * (long(diff) + 1L) * long(scoreWeights[diff])) - ((long(wallBounces)-long(blockLevel))*5L));
   }
 
   if (playerScore < 0)
   {
-    playerScore = 0;
+    playerScore = 0L;
   }
 
   for (int i = 0; i < 5; i++)
   {
      matrix.setCursor(1 + (i  * 6), 1);
-     if(digits[extractDigit(lastPlayerScore,5-i)] != digits[extractDigit(playerScore,5-i)])
+     if(digits[extractDigit(lastPlayerScore,5-i)] != digits[extractDigit(playerScore,5-i)] || force)
      {
       matrix.fillRect(1 + (i  * 6), 1, 6, 8,matrix.Color333(0,0,0));
       matrix.print(F2(digits[extractDigit(playerScore,5-i)]));
      }
      
   }
- 
-  
-//  matrix.setTextSize(1);
-//  matrix.setTextColor(matrix.Color333(dc_r[diff], dc_g[diff], dc_b[diff]));
-//  matrix.setCursor(1, 1);
-//  matrix.print(F2(scoreText));
-//  matrix.fillRect(20,1,15,7, matrix.Color333(0,0,0));
-//  matrix.setCursor(20, 1);
-//  matrix.print(F2(score[blockLevel]));
 }
 
 void increaseLevel()
@@ -368,7 +362,7 @@ void increaseLevel()
       b = b2;
     }
      
-    showScore();
+    showScore(false);
 }
 
 void setDifficulty(int d)
