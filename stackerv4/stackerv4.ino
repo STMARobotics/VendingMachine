@@ -1,3 +1,4 @@
+
 // testshapes demo for RGBmatrixPanel library.
 // Demonstrates the drawing abilities of the RGBmatrixPanel library.
 // For 32x64 RGB LED matrix.
@@ -7,6 +8,7 @@
 #include <Adafruit_GFX.h>   // Core graphics library
 #include <RGBmatrixPanel.h> // Hardware-specific library
 #include <Keyboard.h>
+#include <Servo.h>
 
 #define OE   9
 #define LAT 10
@@ -18,6 +20,13 @@
 #define clear() fillScreen(0)
 
 #define F2(progmem_ptr) (const __FlashStringHelper *)progmem_ptr
+
+Servo servo_easy;
+Servo servo_norm;
+Servo servo_hard;
+Servo servo_pain;
+
+Servo servos[4];
 
 int buttonMain = 4;
 int buttonEasy = 0;
@@ -68,7 +77,7 @@ int letterDelay = 200;
 int diff = 3;
 int diffSpacing = 7;
 
-int b_speed[] = {950, 900/*960*/, 975, 990};
+int b_speed[] = {950, 960, 975, 990};
 int b_height[] = {4, 2, 2, 1};
 int b_width[] = {16, 14, 10, 8};
 
@@ -77,7 +86,7 @@ int dc_g[] = {0, 7, 4, 0};
 int dc_b[] = {7, 0, 0, 0};
 int top_bar[] = {3, 1, 1, 1};
 
-int scoreWeights[] = {4630, 1131, 855, 331};
+float scoreWeights[] = {6999.9, 3307.7, 3461.5, 1735.8};
 
 int sw = 6; //stripe width
 long playerScore = 0L;
@@ -109,6 +118,19 @@ void setup() {
   pinMode(buttonMedium, INPUT_PULLUP);
   pinMode(buttonHard, INPUT_PULLUP);
   pinMode(buttonYes, INPUT_PULLUP);
+
+
+  servo_easy.attach(30);
+  servo_norm.attach(31);
+  servo_hard.attach(32);
+  servo_pain.attach(33);
+  
+  servos[0] = servo_easy;
+  servos[1] = servo_norm;
+  servos[2] = servo_hard;
+  servos[3] = servo_pain;
+
+  dispensePrize(0);
 
 
   for (int i = 0; i < 4; i ++)
@@ -310,13 +332,13 @@ void showScore(bool force)
 
   if (!isRunning && winGame)
   {
-    playerScore = long(playerScore *(1L+ long(block_width) * 0.05L));
+    playerScore = long(playerScore + (long(b_width[diff]) * 1000));
   }
 
   else
   { // maxscore = 99999 
     //
-    playerScore = long((long(blockLevel) * (long(diff) + 1L) * long(scoreWeights[diff])) - ((long(wallBounces)-long(blockLevel))*5L));
+    playerScore = long((long(blockLevel) * long(scoreWeights[diff])) - ((long(wallBounces)-long(blockLevel)-1)*(5135-(1354*long(diff)))));
   }
 
   if (playerScore < 0)
@@ -571,6 +593,12 @@ void diffSelect()
       }
       delay(1);
     }
-  }
-    
+  }   
+}
+
+void dispensePrize(int p)
+{
+  servos[p].write(109);
+  delay(3000);
+  servos[p].write(90);
 }
