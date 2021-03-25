@@ -98,22 +98,22 @@ int wallBounces = 0;
 
 bool winGame = false;
 
-char nameCharOne = "A";
-char nameCharTwo = "A";
-char nameCharThree = "A";
-char nameCharFour = "A";
-char nameCharFive = "A";
+byte nameCharOne = "A";
+byte nameCharTwo = "A";
+byte nameCharThree = "A";
+byte nameCharFour = "A";
+byte nameCharFive = "A";
 
-int teamCharOne = 1;
-int teamCharTwo = 1;
-int teamCharThree = 1;
-int teamCharFour = 1;
+byte teamCharOne = 1;
+byte teamCharTwo = 1;
+byte teamCharThree = 1;
+byte teamCharFour = 1;
 
-int scoreCharOne = 1;
-int scoreCharTwo = 1;
-int scoreCharThree = 1;
-int scoreCharFour = 1;
-int scoreCharFive = 1;
+byte scoreCharOne = 1;
+byte scoreCharTwo = 1;
+byte scoreCharThree = 1;
+byte scoreCharFour = 1;
+byte scoreCharFive = 1;
 int currentLetter = 0;
 int currentNum = 0;
 int cursorPosition = 0;
@@ -126,22 +126,22 @@ const char diffText[][10] PROGMEM = {"1EASY", "2NORM", "3HARD", "4PAIN"};
 const char highScoreWords[][10] PROGMEM = {"HIGH", "SCORE"};
 
 //highscore digets
-const int playerNameDigitOne[][10] PROGMEM = {0, 14, 28, 42};
-const int playerNameDigitTwo[][10] PROGMEM = {1, 15, 29, 43};
-const int playerNameDigitThree[][10] PROGMEM = {2, 16, 30, 44};
-const int playerNameDigitFour[][10] PROGMEM = {3, 17, 31, 45};
-const int playerNameDigitFive[][10] PROGMEM = {4, 18, 32, 46};
+const int playerNameDigitOne[] = {0, 14, 28, 42};
+const int playerNameDigitTwo[] = {1, 15, 29, 43};
+const int playerNameDigitThree[] = {2, 16, 30, 44};
+const int playerNameDigitFour[] = {3, 17, 31, 45};
+const int playerNameDigitFive[] = {4, 18, 32, 46};
 
-const int playerTeamDigitOne[][10] PROGMEM = {5, 19, 33, 47};
-const int playerTeamDigitTwo[][10] PROGMEM = {6, 20, 34, 48};
-const int playerTeamDigitThree[][10] PROGMEM = {7, 21, 35, 49};
-const int playerTeamDigitFour[][10] PROGMEM = {8, 22, 36, 50};
+const int playerTeamDigitOne[] = {5, 19, 33, 47};
+const int playerTeamDigitTwo[] = {6, 20, 34, 48};
+const int playerTeamDigitThree[] = {7, 21, 35, 49};
+const int playerTeamDigitFour[] = {8, 22, 36, 50};
 
-const int playerScoreDigitOne[][10] PROGMEM = {9, 23, 37, 51};
-const int playerScoreDigitTwo[][10] PROGMEM = {10, 24, 38, 52};
-const int playerScoreDigitThree[][10] PROGMEM = {11, 25, 39, 53};
-const int playerScoreDigitFour[][10] PROGMEM = {12, 26, 40, 54};
-const int playerScoreDigitFive[][10] PROGMEM = {13, 27, 41, 55};
+const int playerScoreDigitOne[] = {9, 23, 37, 51};
+const int playerScoreDigitTwo[] = {10, 24, 38, 52};
+const int playerScoreDigitThree[] = {11, 25, 39, 53};
+const int playerScoreDigitFour[] = {12, 26, 40, 54};
+const int playerScoreDigitFive[] = {13, 27, 41, 55};
 
 
 
@@ -179,7 +179,8 @@ void setup() {
   }
 
   pinMode(bMain_light, OUTPUT);
-    
+
+  clearEEPROM();
   splash();
 }
 
@@ -272,8 +273,8 @@ void gameOver()
   }
   delay(3000);
   crumble();
-  readScore();
-  //splash();
+  //readScore();
+  splash();
 }
 
 void win()
@@ -294,9 +295,11 @@ void win()
   }
   delay(3000);
   crumble();
-  readScore();
+  //if (playerScore > getHighScore(diff)){
+  //  nameSetMenu();
+  //}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
   dispensePrize(diff);
-  //splash();
+  splash();
 }
 
 void crumble()
@@ -412,7 +415,7 @@ void increaseLevel()
     {
       gameOver();
       return;
-    }
+    } // Dylan was here
    if (blockLevel == 0)
    {
     wallBounces = 0;
@@ -669,17 +672,17 @@ void readScore()
   matrix.setCursor(1, 23);
   matrix.print("#");
   matrix.setCursor(7, 23);
-  matrix.print(EEPROM.read(F2(playerNameDigitOne[diff])));
+  matrix.print(EEPROM.read(F2(playerTeamDigitOne[diff])));
   matrix.setCursor(13, 23);
-  matrix.print(EEPROM.read(F2(playerNameDigitTwo[diff])));
+  matrix.print(EEPROM.read(F2(playerTeamDigitTwo[diff])));
   matrix.setCursor(19, 23);
-  matrix.print(EEPROM.read(F2(playerNameDigitThree[diff])));
+  matrix.print(EEPROM.read(F2(playerTeamDigitThree[diff])));
   matrix.setCursor(25, 23);
-  matrix.print(EEPROM.read(F2(playerNameDigitFour[diff])));
+  matrix.print(EEPROM.read(F2(playerTeamDigitFour[diff])));
 
   //name
   matrix.setCursor(1, 31);
-  matrix.print(EEPROM.read(F2(playerNameDigitOne[diff])));
+  matrix.print(char(EEPROM.read(F2(playerNameDigitOne[diff]))));
   matrix.setCursor(7, 31);
   matrix.print(EEPROM.read(F2(playerNameDigitTwo[diff])));
   matrix.setCursor(13, 31);
@@ -692,15 +695,15 @@ void readScore()
   //score
   matrix.setTextColor(matrix.Color333(7,7,7));
   matrix.setCursor(1, 52);
-  matrix.print(EEPROM.read(F2(playerNameDigitOne[diff])));
+  matrix.print(EEPROM.read(F2(playerScoreDigitOne[diff])));
   matrix.setCursor(7, 52);
-  matrix.print(EEPROM.read(F2(playerNameDigitTwo[diff])));
+  matrix.print(EEPROM.read(F2(playerScoreDigitTwo[diff])));
   matrix.setCursor(13, 52);
-  matrix.print(EEPROM.read(F2(playerNameDigitThree[diff])));
+  matrix.print(EEPROM.read(F2(playerScoreDigitThree[diff])));
   matrix.setCursor(19, 52);
-  matrix.print(EEPROM.read(F2(playerNameDigitFour[diff])));
+  matrix.print(EEPROM.read(F2(playerScoreDigitFour[diff])));
   matrix.setCursor(25, 52);
-  matrix.print(EEPROM.read(F2(playerNameDigitFive[diff])));
+  matrix.print(EEPROM.read(F2(playerScoreDigitFive[diff])));
   
   matrix.setTextColor(matrix.Color333(dc_r[diff], dc_g[diff], dc_b[diff]));
   matrix.setCursor(1, 44);
@@ -713,31 +716,31 @@ void readScore()
 
 void setName() 
 {
-  scoreCharOne = extractDigit(playerScore, 1);
-  scoreCharTwo = extractDigit(playerScore, 2);
-  scoreCharThree = extractDigit(playerScore, 3);
-  scoreCharFour = extractDigit(playerScore, 4);
-  scoreCharFive = extractDigit(playerScore, 5);
+  scoreCharOne = byte(extractDigit(playerScore, 1));
+  scoreCharTwo = byte(extractDigit(playerScore, 2));
+  scoreCharThree = byte(extractDigit(playerScore, 3));
+  scoreCharFour = byte(extractDigit(playerScore, 4));
+  scoreCharFive = byte(extractDigit(playerScore, 5));
 
   if (diff == 0) 
     {
       //name
-      EEPROM.update(0, nameCharOne);
-      EEPROM.update(1, nameCharTwo);
-      EEPROM.update(2, nameCharThree);
-      EEPROM.update(3, nameCharFour);
-      EEPROM.update(4, nameCharFive);
-      //team
-      EEPROM.update(5, teamCharOne);
-      EEPROM.update(6, teamCharTwo);
-      EEPROM.update(7, teamCharThree);
-      EEPROM.update(8, teamCharFour);
-      //score
-      EEPROM.update(9, scoreCharOne);
-      EEPROM.update(10, scoreCharTwo);
-      EEPROM.update(11, scoreCharThree);
-      EEPROM.update(12, scoreCharFour);
-      EEPROM.update(13, scoreCharFive);
+      EEPROM.update(0, byte(nameCharOne));
+//      EEPROM.put(1, byte(nameCharTwo));
+//      EEPROM.put(2, byte(nameCharThree));
+//      EEPROM.put(3, byte(nameCharFour));
+//      EEPROM.put(4, byte(nameCharFive));
+//      //team
+//      EEPROM.put(5, byte(teamCharOne));
+//      EEPROM.put(6, byte(teamCharTwo));
+//      EEPROM.put(7, byte(teamCharThree));
+//      EEPROM.put(8, byte(teamCharFour));
+//      //score
+//      EEPROM.put(9, byte(scoreCharOne));
+//      EEPROM.put(10, byte(scoreCharTwo));
+//      EEPROM.put(11, byte(scoreCharThree));
+//      EEPROM.put(12, byte(scoreCharFour));
+//      EEPROM.put(13, byte(scoreCharFive));
     }
    else if (diff == 1) 
     {
@@ -817,13 +820,13 @@ void nameSetMenu(){
       matrix.setCursor(1, 27);
       matrix.print("TEAM");
       matrix.setCursor(1, 35);
-      matrix.print("#");
+      matrix.print("0");
       matrix.setCursor(7, 35);
-      matrix.print("#");
+      matrix.print("0");
       matrix.setCursor(13, 35);
-      matrix.print("#");
+      matrix.print("0");
       matrix.setCursor(19, 35);
-      matrix.print("#");
+      matrix.print("0");
       matrix.setCursor(1, 13);
       matrix.print("_");
 
@@ -971,6 +974,17 @@ void nameSetMenu(){
             delay(500);
         }
       }
-
+      setName();
       readScore();
    }
+void clearEEPROM(){
+  for (int i = 0; i < 55; i++){
+    EEPROM.update(i,0);
+  }
+
+}
+
+int getHighScore(int d)
+{
+  return (playerScoreDigitOne[d]*10000) + (playerScoreDigitTwo[d]*1000) + (playerScoreDigitThree[d]*100) + (playerScoreDigitFour[d]*10) + playerScoreDigitFive;
+}
