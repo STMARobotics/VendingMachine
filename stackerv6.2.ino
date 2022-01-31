@@ -10,6 +10,7 @@
 #include <Keyboard.h>
 #include <Servo.h>
 #include <EEPROM.h>
+#include <ezButton.h>
 
 #define OE   9
 #define LAT 10
@@ -23,17 +24,15 @@
 #define F2(progmem_ptr) (const __FlashStringHelper *)progmem_ptr
 
 int servosPins[] = {40,42,44,46};
+int servoRunSpeeds[] = {80,80,80,80};
 Servo servo_easy;
-const int servoEasyRun = 80;
 Servo servo_norm;
-const int servoNormalRun = 84;
 Servo servo_hard;
 Servo servo_pain;
 
 Servo servos[4];
 
-const int servoOneRotationTime = 1900;
-
+ezButton limitSwitches[4] = {ezButton(41), ezButton(43), ezButton(45), ezButton(47)};
 
 int buttonMain = 4;
 int buttonEasy = 0;
@@ -152,6 +151,9 @@ const int playerScoreDigitFive[] = {13, 27, 41, 55};
 
 
 void setup() {
+  for (int i = 0; i < 4y; i ++){
+    limitSwitches[i].setDebounceTime(20);
+  }
 
   bw_reset = b_width[diff];
   matrix.begin();
@@ -166,13 +168,11 @@ void setup() {
   pinMode(buttonMedium, INPUT_PULLUP);
   pinMode(buttonHard, INPUT_PULLUP);
   pinMode(buttonYes, INPUT_PULLUP);
-
   
   servos[0] = servo_easy;
   servos[1] = servo_norm;
   servos[2] = servo_hard;
   servos[3] = servo_pain;
-
 
 
   for (int i = 0; i < 4; i ++)
@@ -650,21 +650,32 @@ void diffSelect()
   }   
 }
 
+void stopServo(int p){
+  bool finish = false;
+  while(true){
+    limitSwitches[p].loop();
+    if (limitSwitches[p].isPressed()){
+      while(true){
+        limitSwitches[p].loop();
+        if (limitSwitches[p].isReleased()){
+          servos[p].detach();
+          finish = true;
+          break;
+          
+        }
+      }
+    }
+  if (finish){
+    break;
+  }
+  }
+}
+
 void dispensePrize(int p)
 {
-  Serial.print("reached");
-  if (p==0){
-    Serial.print("done");
-    servos[p].attach(servosPins[p]);
-    servos[p].write(servoEasyRun);
-    delay(servoOneRotationTime);
-    servos[p].detach();
-  } else if (p==1){
-    servos[p].attach(servosPins[p]);
-    servos[p].write(servoNormalRun);
-    delay(servoOneRotationTime);
-    servos[p].detach();
-  }
+  servos[p].attach(servosPins[p]);
+  servos[p].write(servoRunSpeeds[p]);
+  stopServo(p);
 }
 
 void readScore() 
