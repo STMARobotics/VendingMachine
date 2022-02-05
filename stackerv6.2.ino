@@ -151,7 +151,7 @@ const int playerScoreDigitFive[] = {13, 27, 41, 55};
 
 
 void setup() {
-  for (int i = 0; i < 4y; i ++){
+  for (int i = 0; i < 4; i ++){
     limitSwitches[i].setDebounceTime(20);
   }
 
