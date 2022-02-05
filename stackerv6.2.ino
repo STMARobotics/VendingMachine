@@ -23,7 +23,7 @@
 
 #define F2(progmem_ptr) (const __FlashStringHelper *)progmem_ptr
 
-int servosPins[] = {40,42,44,46};
+int servosPins[] = {44,46,40,42};
 int servoRunSpeeds[] = {80,80,80,80};
 Servo servo_easy;
 Servo servo_norm;
@@ -32,7 +32,7 @@ Servo servo_pain;
 
 Servo servos[4];
 
-ezButton limitSwitches[4] = {ezButton(41), ezButton(43), ezButton(45), ezButton(47)};
+ezButton limitSwitches[4] = {ezButton(45), ezButton(47), ezButton(41), ezButton(43)};
 
 int buttonMain = 4;
 int buttonEasy = 0;
@@ -173,7 +173,6 @@ void setup() {
   servos[1] = servo_norm;
   servos[2] = servo_hard;
   servos[3] = servo_pain;
-
 
   for (int i = 0; i < 4; i ++)
   {
