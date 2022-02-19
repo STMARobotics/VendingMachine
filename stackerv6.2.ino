@@ -1,4 +1,3 @@
-
 // testshapes demo for RGBmatrixPanel library.
 // Demonstrates the drawing abilities of the RGBmatrixPanel library.
 // For 32x64 RGB LED matrix.
@@ -24,7 +23,7 @@
 #define F2(progmem_ptr) (const __FlashStringHelper *)progmem_ptr
 
 int servosPins[] = {44,46,40,42};
-int servoRunSpeeds[] = {80,80,80,80};
+int servoRunSpeeds[] = {82,80,109,74};
 Servo servo_easy;
 Servo servo_norm;
 Servo servo_hard;
@@ -172,8 +171,13 @@ void setup() {
   servos[0] = servo_easy;
   servos[1] = servo_norm;
   servos[2] = servo_hard;
-  servos[3] = servo_pain;
+  servos[3] = servo_pain; 
 
+
+  
+
+  
+  
   for (int i = 0; i < 4; i ++)
   {
     pinMode(lights[i], OUTPUT);
@@ -651,14 +655,22 @@ void diffSelect()
 
 void stopServo(int p){
   bool finish = false;
+  int rotations = 1;
+  if (p==2){
+    rotations = 2;
+  }
   while(true){
     limitSwitches[p].loop();
     if (limitSwitches[p].isPressed()){
       while(true){
         limitSwitches[p].loop();
         if (limitSwitches[p].isReleased()){
-          servos[p].detach();
-          finish = true;
+          if (rotations==1){
+            finish = true;
+            servos[p].detach();
+          } else {
+            rotations=rotations-1;
+          }
           break;
           
         }
