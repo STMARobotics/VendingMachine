@@ -23,7 +23,7 @@
 #define F2(progmem_ptr) (const __FlashStringHelper *)progmem_ptr
 
 int servosPins[] = {44,46,40,42};
-int servoRunSpeeds[] = {82,80,109,74};
+int servoRunSpeeds[] = {82,78,109,74};
 Servo servo_easy;
 Servo servo_norm;
 Servo servo_hard;
