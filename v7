@@ -1,0 +1,635 @@
+#include <Adafruit_GFX.h>   // Core graphics library
+#include <RGBmatrixPanel.h> // Hardware-specific library for LEDs
+#include <ezButton.h> //buttons
+#include <string.h>
+#include <Keyboard.h>
+#include <Servo.h>
+#include <EEPROM.h>
+#define OE   9 //5-15 matrix stuff, not sure what it does but i'll leave it in anyway
+#define LAT 10
+#define CLK 11
+#define A   A0
+#define B   A1
+#define C   A2
+#define D   A3
+#define clear() fillScreen(0)
+
+#define F2(progmem_ptr) (const __FlashStringHelper *)progmem_ptr
+RGBmatrixPanel matrix(A, B, C, D, CLK, LAT, OE, false, 64);
+
+//button setup
+ezButton blue(0); //blue button = 0
+ezButton green(1); //green button = 1
+ezButton yellow(2);
+ezButton red(3);
+ezButton white(4);
+
+int color;
+int prevColor;
+int started;
+int timeSpent;
+unsigned long seedGen;
+int points;
+int buttonPress;
+int whitePress;
+int a;
+int b;
+int lives;
+int timeLimit;
+bool row;
+bool cheatsEnabled;
+int fun;
+String str;
+int servosPins[] = {44,46,40,42};
+int servoRunSpeeds[] = {82,78,109,74};
+int lineToErase;
+int timeToErase;
+Servo servo1;
+Servo servo2;
+Servo servo3;
+Servo servo4;
+
+Servo servos[4];
+
+void setup() {
+  Serial.begin(9600); //start serial
+  matrix.begin(); //start matrix
+  matrix.fillScreen(matrix.Color333(0, 0, 0));
+  color = 0;
+  prevColor = -1;
+  started = 0;
+  cheatsEnabled = false; //set to true to enable cheats...
+  startScreen();
+}
+void crumble()
+{
+  for (int i = 0; i <6000; i ++)
+  {
+    matrix.drawPixel(random(0, 32), random(0,64), matrix.Color333(0,0,0));
+  }
+  matrix.fillScreen(0);
+  started = 0;
+  points = 0;
+}
+void getButtons(){
+  blue.loop();
+  green.loop();
+  yellow.loop();
+  red.loop();
+  white.loop();
+  if(blue.isPressed()){
+    buttonPress = 0;
+  } else if(green.isPressed()){
+    buttonPress = 1;
+  } else if(yellow.isPressed()){
+    buttonPress = 2;
+  } else if(red.isPressed()){
+    buttonPress = 3;
+  } else {
+    buttonPress = -1;
+  }
+  if(white.getState() == 1 && cheatsEnabled == true){
+    points = points + 100;
+  }
+}
+void lose() {
+  matrix.fillScreen(matrix.Color333(0, 0, 0));
+  matrix.setTextSize(1);     // size 1 == 8 pixels high
+  matrix.setTextWrap(true); // Don't wrap at end of line - will do ourselves
+  //draw the text
+  seedGen = millis();
+  srand(seedGen);
+  fun = 0 + (rand() % 100);
+  if(points<150 && fun > 2){
+    matrix.setCursor(1, 43);
+    matrix.fillRect(0, 42, 32, 63, matrix.Color333(0, 0, 0));
+    uint8_t w = 0;
+    str = "Score";
+    // Serial.println(str);
+    for (w=0; w<5; w++) {
+      matrix.setTextColor(matrix.Color333(2, 2, 2));
+      matrix.print(str[w]);
+    }
+    str = points;
+    matrix.setCursor(13, 51);
+    if(points>9){
+      matrix.setCursor(10, 51);
+    }
+    if(points>99){
+      matrix.setCursor(7, 51);
+    }
+    for (w=0; w<3; w++){
+      matrix.print(str[w]);
+    }
+    for (a=0; a<3; a++){
+    matrix.fillRect(0, 0, 34, 43, matrix.Color333(0, 0, 0));
+    matrix.drawLine(12, 3, 19, 3, matrix.Color333(2, 2, 2));
+    matrix.drawLine(20, 4, 22, 5, matrix.Color333(2, 2, 2));
+    matrix.drawLine(24, 6, 27, 9, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(27, 10, matrix.Color333(2, 2, 2));
+    matrix.drawLine(28, 11, 28, 15, matrix.Color333(2, 2, 2));
+    matrix.drawLine(27, 16, 27, 17, matrix.Color333(2, 2, 2));
+    matrix.drawLine(26, 18, 26, 19, matrix.Color333(2, 2, 2));
+    matrix.drawLine(27, 20, 27, 23, matrix.Color333(2, 2, 2));
+    matrix.drawLine(27, 23, 24, 26, matrix.Color333(2, 2, 2));
+    matrix.drawLine(24, 26, 24, 31, matrix.Color333(2, 2, 2));
+    matrix.drawLine(23, 31, 20, 34, matrix.Color333(2, 2, 2));
+    matrix.drawLine(22, 33, 21, 34, matrix.Color333(2, 2, 2));
+    matrix.drawLine(19, 34, 10, 34, matrix.Color333(2, 2, 2));
+    matrix.drawLine(10, 33, 10, 16, matrix.Color333(2, 2, 2));
+    matrix.drawLine(11, 33, 11, 16, matrix.Color333(2, 2, 2));
+    matrix.drawLine(9, 16, 12, 16, matrix.Color333(2, 2, 2));
+    matrix.drawLine(8, 17, 14, 17, matrix.Color333(2, 2, 2));
+    matrix.drawLine(7, 18, 13, 18, matrix.Color333(2, 2, 2));
+    matrix.drawLine(7, 19, 13, 19, matrix.Color333(2, 2, 2));
+    matrix.drawLine(7, 20, 12, 20, matrix.Color333(2, 2, 2));
+    matrix.drawLine(8, 21, 9, 21, matrix.Color333(2, 2, 2));
+    matrix.drawLine(9, 33, 9, 32, matrix.Color333(2, 2, 2));
+    matrix.drawLine(7, 31, 8, 31, matrix.Color333(2, 2, 2));
+    matrix.drawLine(7, 26, 7, 31, matrix.Color333(2, 2, 2));
+    matrix.drawLine(7, 26, 4, 23, matrix.Color333(2, 2, 2));
+    matrix.drawLine(4, 23, 4, 20, matrix.Color333(2, 2, 2));
+    matrix.drawLine(5, 19, 5, 18, matrix.Color333(2, 2, 2));
+    matrix.drawLine(5, 19, 4, 16, matrix.Color333(2, 2, 2));
+    matrix.drawLine(3, 15, 3, 11, matrix.Color333(2, 2, 2));
+    matrix.drawLine(4, 10, 4, 9, matrix.Color333(2, 2, 2));
+    matrix.drawLine(5, 8, 8, 5, matrix.Color333(2, 2, 2));
+    matrix.drawLine(9, 5, 10, 5, matrix.Color333(2, 2, 2));
+    matrix.drawLine(10, 4, 11, 4, matrix.Color333(2, 2, 2));
+    matrix.drawLine(11, 6, 13, 6, matrix.Color333(2, 2, 2));
+    matrix.drawLine(14, 7, 15, 8, matrix.Color333(2, 2, 2));
+    matrix.drawLine(16, 8, 18, 10, matrix.Color333(2, 2, 2));
+    matrix.drawLine(20, 9, 20, 6, matrix.Color333(2, 2, 2));
+    matrix.drawLine(21, 6, 21, 5, matrix.Color333(2, 2, 2));
+    matrix.drawLine(6, 12, 6, 13, matrix.Color333(2, 2, 2));
+    matrix.drawLine(7, 14, 7, 16, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(6, 17, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(7, 22, matrix.Color333(2, 2, 2));
+    matrix.drawLine(8, 23, 9, 23, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(12, 22, matrix.Color333(2, 2, 2));
+    matrix.drawLine(9, 25, 9, 30, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(8, 26, matrix.Color333(2, 2, 2));
+    matrix.drawLine(12, 29, 22, 29, matrix.Color333(2, 2, 2));
+    matrix.drawLine(12, 31, 12, 27, matrix.Color333(2, 2, 2));
+    matrix.drawLine(14, 31, 14, 27, matrix.Color333(2, 2, 2));
+    matrix.drawLine(17, 31, 17, 27, matrix.Color333(2, 2, 2));
+    matrix.drawLine(19, 31, 19, 27, matrix.Color333(2, 2, 2));
+    matrix.drawLine(21, 31, 21, 26, matrix.Color333(2, 2, 2));
+    matrix.drawLine(22, 30, 22, 25, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(23, 26, matrix.Color333(2, 2, 2));
+    matrix.drawLine(11, 13, 13, 13, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(14, 14, matrix.Color333(2, 2, 2));
+    matrix.drawLine(18, 11, 19, 13, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(17, 14, matrix.Color333(2, 2, 2));
+    matrix.drawLine(15, 16, 16, 16, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(25, 17, matrix.Color333(2, 2, 2));
+    matrix.drawLine(24, 16, 24, 14, matrix.Color333(2, 2, 2));
+    matrix.drawLine(25, 13, 25, 12, matrix.Color333(2, 2, 2));
+    matrix.drawLine(19, 14, 20, 15, matrix.Color333(2, 2, 2));
+    matrix.drawLine(19, 16, 22, 16, matrix.Color333(2, 2, 2));
+    matrix.drawLine(17, 17, 23, 17, matrix.Color333(2, 2, 2));
+    matrix.drawLine(18, 18, 24, 18, matrix.Color333(2, 2, 2));
+    matrix.drawLine(18, 19, 24, 19, matrix.Color333(2, 2, 2));
+    matrix.drawLine(19, 20, 24, 20, matrix.Color333(2, 2, 2));
+    matrix.drawLine(21, 21, 23, 21, matrix.Color333(2, 2, 2));
+    matrix.drawLine(14, 24, 14, 21, matrix.Color333(2, 2, 2));
+    matrix.drawLine(15, 23, 15, 20, matrix.Color333(2, 2, 2));
+    matrix.drawLine(16, 23, 16, 20, matrix.Color333(2, 2, 2));
+    matrix.drawLine(17, 24, 17, 21, matrix.Color333(2, 2, 2));
+    matrix.drawLine(19, 22, 20, 22, matrix.Color333(2, 2, 2));
+    matrix.drawLine(21, 23, 21, 24, matrix.Color333(2, 2, 2));
+    matrix.drawLine(23, 23, 22, 23, matrix.Color333(2, 2, 2)); 
+    matrix.drawPixel(24, 22, matrix.Color333(2, 2, 2));
+    matrix.drawLine(18, 13, 20, 13, matrix.Color333(2, 2, 2));
+    delay(550);
+    matrix.fillRect(0, 0, 34, 35, matrix.Color333(0, 0, 0));
+    matrix.drawLine(12, 3, 19, 3, matrix.Color333(2, 2, 2));
+    matrix.drawLine(11, 4, 10, 4, matrix.Color333(2, 2, 2));
+    matrix.drawLine(10, 5, 8, 5, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(7, 6, matrix.Color333(2, 2, 2));
+    matrix.drawLine(6, 7, 5, 7, matrix.Color333(2, 2, 2));
+    matrix.drawLine(4, 8, 4, 9, matrix.Color333(2, 2, 2));
+    matrix.drawLine(3, 10, 3, 15, matrix.Color333(2, 2, 2));
+    matrix.drawLine(4, 15, 4, 16, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(5, 17, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(6, 16, matrix.Color333(2, 2, 2));
+    matrix.drawLine(4, 18, 4, 21, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(5, 22, matrix.Color333(2, 2, 2));
+    matrix.drawLine(6, 23, 6, 24, matrix.Color333(2, 2, 2));
+    matrix.drawLine(7, 24, 7, 30, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(8, 30, matrix.Color333(2, 2, 2));
+    matrix.drawLine(9, 31, 9, 33, matrix.Color333(2, 2, 2));
+    matrix.drawLine(10, 34, 21, 34, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(21, 33, matrix.Color333(2, 2, 2));
+    matrix.drawLine(22, 33, 22, 31, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(23, 30, matrix.Color333(2, 2, 2));
+    matrix.drawLine(24, 30, 24, 24, matrix.Color333(2, 2, 2));
+    matrix.drawLine(25, 24, 25, 23, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(26, 22, matrix.Color333(2, 2, 2));
+    matrix.drawLine(27, 21, 27, 18, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(26, 17, matrix.Color333(2, 2, 2));
+    matrix.drawLine(27, 16, 27, 15, matrix.Color333(2, 2, 2));
+    matrix.drawLine(28, 14, 28, 10, matrix.Color333(2, 2, 2));
+    matrix.drawLine(27, 9, 27, 8, matrix.Color333(2, 2, 2));
+    matrix.drawLine(26, 7, 25, 7, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(24, 6, matrix.Color333(2, 2, 2));
+    matrix.drawLine(23, 5, 21, 5, matrix.Color333(2, 2, 2));
+    matrix.drawLine(21, 4, 20, 4, matrix.Color333(2, 2, 2));
+    matrix.drawLine(21, 6, 20, 6, matrix.Color333(2, 2, 2));
+    matrix.drawLine(20, 7, 20, 8, matrix.Color333(2, 2, 2));
+    matrix.drawLine(11, 6, 13, 6, matrix.Color333(2, 2, 2));
+    matrix.drawLine(14, 7, 16, 7, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(17, 8, matrix.Color333(2, 2, 2));
+    matrix.drawLine(18, 9, 19, 9, matrix.Color333(2, 2, 2));
+    matrix.drawLine(20, 10, 20, 12, matrix.Color333(2, 2, 2));
+    matrix.drawLine(19, 12, 18, 12, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(17, 13, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(14, 13, matrix.Color333(2, 2, 2));
+    matrix.drawLine(13, 12, 11, 12, matrix.Color333(2, 2, 2));
+    matrix.drawLine(6, 11, 6, 12, matrix.Color333(2, 2, 2));
+    matrix.drawLine(7, 13, 7, 15, matrix.Color333(2, 2, 2));
+    matrix.drawLine(25, 11, 25, 12, matrix.Color333(2, 2, 2));
+    matrix.drawLine(24, 13, 24, 15, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(25, 16, matrix.Color333(2, 2, 2));
+    matrix.drawLine(19, 13, 20, 14, matrix.Color333(2, 2, 2));
+    matrix.drawLine(19, 15, 22, 15, matrix.Color333(2, 2, 2));
+    matrix.drawLine(23, 16, 17, 16, matrix.Color333(2, 2, 2));
+    matrix.drawLine(24, 17, 18, 17, matrix.Color333(2, 2, 2));
+    matrix.drawLine(24, 18, 19, 18, matrix.Color333(2, 2, 2));
+    matrix.drawLine(23, 19, 21, 19, matrix.Color333(2, 2, 2));
+    matrix.drawLine(16, 15, 15, 15, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(24, 20, matrix.Color333(2, 2, 2));
+    matrix.drawLine(23, 21, 21, 21, matrix.Color333(2, 2, 2));
+    matrix.drawLine(20, 20, 19, 20, matrix.Color333(2, 2, 2));
+    matrix.drawLine(21, 22, 23, 24, matrix.Color333(2, 2, 2));
+    matrix.drawLine(22, 24, 22, 29, matrix.Color333(2, 2, 2));
+    matrix.drawLine(21, 24, 21, 30, matrix.Color333(2, 2, 2));
+    matrix.drawLine(19, 25, 19, 30, matrix.Color333(2, 2, 2));
+    matrix.drawLine(17, 25, 17, 30, matrix.Color333(2, 2, 2));
+    matrix.drawLine(14, 25, 14, 30, matrix.Color333(2, 2, 2));
+    matrix.drawLine(12, 30, 12, 25, matrix.Color333(2, 2, 2));
+    matrix.drawLine(20, 26, 13, 26, matrix.Color333(2, 2, 2));
+    matrix.drawLine(20, 27, 13, 27, matrix.Color333(2, 2, 2));
+    matrix.drawLine(20, 28, 13, 28, matrix.Color333(2, 2, 2));
+    matrix.drawLine(20, 29, 13, 29, matrix.Color333(2, 2, 2));
+    matrix.drawLine(11, 33, 11, 15, matrix.Color333(2, 2, 2));
+    matrix.drawLine(10, 33, 10, 15, matrix.Color333(2, 2, 2));
+    matrix.drawLine(14, 19, 14, 22, matrix.Color333(2, 2, 2));
+    matrix.drawLine(15, 21, 15, 18, matrix.Color333(2, 2, 2));
+    matrix.drawLine(16, 21, 16, 18, matrix.Color333(2, 2, 2));
+    matrix.drawLine(17, 19, 17, 22, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(12, 20, matrix.Color333(2, 2, 2));
+    matrix.drawLine(9, 21, 8, 21, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(7, 20, matrix.Color333(2, 2, 2));
+    matrix.drawLine(9, 23, 9, 29, matrix.Color333(2, 2, 2));
+    matrix.drawPixel(8, 24, matrix.Color333(2, 2, 2));
+    matrix.drawLine(9, 15, 12, 15, matrix.Color333(2, 2, 2));
+    matrix.drawLine(8, 16, 14, 16, matrix.Color333(2, 2, 2));
+    matrix.drawLine(7, 17, 13, 17, matrix.Color333(2, 2, 2));
+    matrix.drawLine(7, 18, 12, 18, matrix.Color333(2, 2, 2));
+    matrix.drawLine(8, 19, 9, 19, matrix.Color333(2, 2, 2));
+    matrix.setCursor(11, 36);
+    uint8_t w = 0;
+    str = "HA";
+    for (w=0; w<13; w++) {
+      matrix.setTextColor(matrix.Color333(2, 2, 2));
+      matrix.print(str[w]);
+    }
+    delay(550);
+    }
+  } else {
+    matrix.setCursor(0, 0);
+    uint8_t w = 0;
+    str = "GO DO SOMETHING ELSE!!!!!!!!!!";
+    for(w=0; w<25; w++){
+      matrix.setTextColor(matrix.Color333(255, 0, 0));
+      matrix.print(str[w]);
+    }
+    matrix.setCursor(1, 43);
+    w = 0;
+    str = "Score";
+    Serial.println(str);
+    for (w=0; w<5; w++) {
+      matrix.setTextColor(matrix.Color333(2, 2, 2));
+      matrix.print(str[w]);
+    }
+    str = points;
+    for (w=0; w<10; w++){
+      matrix.print(str[w]);
+    }
+    delay(6000);
+  }
+  dispensePrize();
+  crumble();
+  startScreen();
+}
+void lifeCheck() {
+  Serial.println(lives);
+  if (lives == 2){
+    matrix.drawLine(13, 4, 13, 4, matrix.Color333(0, 0, 0));
+    matrix.drawLine(14, 3, 14, 5, matrix.Color333(0, 0, 0));
+    matrix.drawLine(15, 4, 15, 6, matrix.Color333(0, 0, 0));
+    matrix.drawLine(16, 3, 16, 5, matrix.Color333(0, 0, 0));
+    matrix.drawLine(17, 4, 17, 4, matrix.Color333(0, 0, 0));
+    matrix.drawLine(0, 9, 31, 63, matrix.Color333(1,1,1));
+    matrix.drawLine(0, 63, 31, 9, matrix.Color333(1,1,1));
+    delay(2500);    
+  } else if (lives == 1){
+    matrix.drawLine(7, 4, 7, 4, matrix.Color333(0, 0, 0));
+    matrix.drawLine(8, 3, 8, 5, matrix.Color333(0, 0, 0));
+    matrix.drawLine(9, 4, 9, 6, matrix.Color333(0, 0, 0));
+    matrix.drawLine(10, 3, 10, 5, matrix.Color333(0, 0, 0));
+    matrix.drawLine(11, 4, 11, 4, matrix.Color333(0, 0, 0));
+    matrix.drawLine(0, 9, 31, 63, matrix.Color333(1,1,1));
+    matrix.drawLine(0, 63, 31, 9, matrix.Color333(1,1,1));
+    delay(2500);    
+  } else {
+    started = 0;
+    lose();
+  }
+}
+void dispensePrize(){
+  if (points >= 20 && points < 50) {
+    servo1.attach(44, 600, 2300);
+    servo1.write(180);             
+    delay(1400);
+    servo1.detach();
+    delay(1000);
+  }
+
+  else if (points >= 50 && points < 100) {
+    servo2.attach(46, 600, 2300);
+    for (int i = 0; i <= 120; i++){
+      servo2.write(i);
+      Serial.println(i);
+      delay(9);
+    }
+    for (int i = 0; i <= 15; i++){
+      servo2.write(i);
+      Serial.println(i);
+      delay(9);
+    }
+    for (int i = 0; i <= 120; i++){
+      servo2.write(i);
+      Serial.println(i);
+      delay(9);
+    }
+    for (int i = 0; i <= 15; i++){
+      servo2.write(i);
+      Serial.println(i);
+      delay(9);
+    }
+    servo2.detach();
+    delay(1000);
+  }
+
+  else if (points >= 100 && points < 150){
+    servo3.attach(40, 600, 2300);
+    for (int i = 0; i <= 200; i++){
+      servo3.write(i);
+      Serial.println(i);
+      delay(10);
+    }
+    for (int i = 0; i <= 200; i++){
+      servo3.write(i);
+      Serial.println(i);
+      delay(10);
+    }
+    servo3.detach();
+    delay(1000);
+  }
+
+  else if (points >= 150) {
+    servo4.attach(42, 600, 2300);
+    for (int i = 0; i <= 100; i++){
+      servo4.write(i);
+      Serial.println(i);
+      delay(8);
+    }
+    for (int i = 0; i <= 21; i++){
+      servo4.write(i);
+      Serial.println(i);
+      delay(8);
+    }
+    for (int i = 0; i <= 100; i++){
+      servo4.write(i);
+      Serial.println(i);
+      delay(8);
+    }
+    for (int i = 0; i <= 21; i++){
+      servo4.write(i);
+      Serial.println(i);
+      delay(8);
+    }
+    servo4.detach();
+  }
+}
+void startScreen(){
+  timeSpent = 0;
+  matrix.setRotation(3);
+  matrix.fillScreen(matrix.Color333(0, 0, 0));
+  matrix.drawLine(13, 14, 18, 14, matrix.Color333(2, 2, 2));
+  matrix.drawPixel(13, 15, matrix.Color333(2, 2, 2));
+  matrix.drawLine(13, 16, 8, 18, matrix.Color333(2, 2, 2));
+  matrix.drawLine(8, 17, 8, 16, matrix.Color333(2, 2, 2));
+  matrix.drawLine(7, 16, 6, 16, matrix.Color333(2, 2, 2));
+  matrix.drawLine(6, 16, 3, 19, matrix.Color333(2, 2, 2));
+  matrix.drawLine(6, 17, 3, 20, matrix.Color333(2, 2, 2));
+  matrix.drawLine(3, 21, 5, 21, matrix.Color333(2, 2, 2));
+  matrix.drawLine(5, 22, 3, 25, matrix.Color333(2, 2, 2));
+  matrix.drawLine(3, 27, 3, 31, matrix.Color333(2, 2, 2));
+  matrix.drawLine(0, 26, 4, 26, matrix.Color333(2, 2, 0));
+  matrix.drawLine(1, 28, 4, 28, matrix.Color333(0, 0, 4));
+  matrix.drawLine(2, 30, 4, 30, matrix.Color333(2, 2, 0));
+  matrix.drawLine(4, 32, 5, 35, matrix.Color333(2, 2, 2));
+  matrix.drawLine(4, 35, 3, 35, matrix.Color333(2, 2, 2));
+  matrix.drawLine(3, 36, 7, 40, matrix.Color333(2, 2, 2));
+  matrix.drawLine(3, 37, 6, 40, matrix.Color333(2, 2, 2));
+  matrix.drawLine(8, 40, 8, 38, matrix.Color333(2, 2, 2));
+  matrix.drawLine(8, 38, 13, 40, matrix.Color333(2, 2, 2));
+  matrix.drawPixel(13, 41, matrix.Color333(2, 2, 2));
+  matrix.drawLine(13, 42, 18, 42, matrix.Color333(2, 2, 2));
+  matrix.drawLine(13, 42, 18, 42, matrix.Color333(2, 2, 2));
+  matrix.drawLine(18, 42, 18, 40, matrix.Color333(2, 2, 2));
+  matrix.drawLine(18, 40, 23, 38, matrix.Color333(2, 2, 2));
+  matrix.drawLine(23, 38, 23, 40, matrix.Color333(2, 2, 2));
+  matrix.drawLine(24, 40, 28, 36, matrix.Color333(2, 2, 2));
+  matrix.drawLine(25, 40, 28, 37, matrix.Color333(2, 2, 2));
+  matrix.drawLine(28, 35, 26, 35, matrix.Color333(2, 2, 2));
+  matrix.drawLine(26, 34, 28, 31, matrix.Color333(2, 2, 2));
+  matrix.drawLine(28, 31, 28, 25, matrix.Color333(2, 2, 2));
+  matrix.drawLine(27, 30, 29, 30, matrix.Color333(2, 2, 0));
+  matrix.drawLine(27, 28, 30, 28, matrix.Color333(0, 0, 4));
+  matrix.drawLine(27, 26, 31, 26, matrix.Color333(2, 2, 0));
+  matrix.drawLine(28, 25, 26, 22, matrix.Color333(2, 2, 2));
+  matrix.drawLine(26, 21, 28, 21, matrix.Color333(2, 2, 2));
+  matrix.drawLine(26, 21, 28, 21, matrix.Color333(2, 2, 2));
+  matrix.drawLine(28, 20, 24, 16, matrix.Color333(2, 2, 2));
+  matrix.drawLine(25, 16, 28, 19, matrix.Color333(2, 2, 2));
+  matrix.drawLine(23, 16, 23, 18, matrix.Color333(2, 2, 2));
+  matrix.drawLine(23, 18, 18, 16, matrix.Color333(2, 2, 2));
+  matrix.drawPixel(18, 15, matrix.Color333(2, 2, 2));
+  str = "7";
+  matrix.setCursor(6, 25);
+  matrix.setTextColor(matrix.Color333(2, 2, 0));
+  matrix.print(str);
+  str = "0";
+  matrix.setCursor(11, 25);
+  matrix.setTextColor(matrix.Color333(0, 0, 4));
+  matrix.print(str);
+  str = "2";
+  matrix.setCursor(16, 25);
+  matrix.setTextColor(matrix.Color333(2, 2, 0));
+  matrix.print(str);
+  str = "8";
+  matrix.setCursor(21, 25);
+  matrix.setTextColor(matrix.Color333(0, 0, 4));
+  matrix.print(str);
+  matrix.fillRect(7, 45, 3, 3, matrix.Color333(0, 0, 2));
+  matrix.fillRect(12, 45, 3, 3, matrix.Color333(0, 2, 0));
+  matrix.fillRect(17, 45, 3, 3, matrix.Color333(2, 2, 0));
+  matrix.fillRect(22, 45, 3, 3, matrix.Color333(2, 0, 0));
+  matrix.fillRect(13, 51, 6, 6, matrix.Color333(2, 2, 2));
+  matrix.drawLine(15, 50, 16, 50, matrix.Color333(2, 2, 2));
+  matrix.drawLine(19, 53, 19, 54, matrix.Color333(2, 2, 2)); 
+  matrix.drawLine(16, 57, 15, 57, matrix.Color333(2, 2, 2));
+  matrix.drawLine(12, 54, 12, 53, matrix.Color333(2, 2, 2));
+  matrix.drawLine(4, 53, 9, 53, matrix.Color333(2, 2, 2));
+  matrix.drawLine(4, 54, 9, 54, matrix.Color333(2, 2, 2));
+  matrix.drawLine(8, 52, 8, 55, matrix.Color333(2, 2, 2));
+  matrix.drawLine(22, 53, 27, 53, matrix.Color333(2, 2, 2));
+  matrix.drawLine(27, 54, 22, 54, matrix.Color333(2, 2, 2));
+  matrix.drawLine(23, 52, 23, 55, matrix.Color333(2, 2, 2));
+  for(a=0; a != 1; a=a){
+    white.loop();
+    whitePress = white.getState();
+    matrix.drawLine(8, 51, 10, 53, matrix.Color333(0, 0, 0));
+    matrix.drawLine(10, 54, 8, 56, matrix.Color333(0, 0, 0));
+
+    matrix.drawLine(21, 53, 23, 51, matrix.Color333(0, 0, 0));
+    matrix.drawLine(21, 54, 23, 56, matrix.Color333(0, 0, 0));
+
+    matrix.drawLine(7, 51, 7, 56, matrix.Color333(2, 2, 2));
+    matrix.drawLine(3, 53, 3, 54, matrix.Color333(2, 2, 2));
+
+    matrix.drawLine(24, 51, 24, 56, matrix.Color333(2, 2, 2));
+    matrix.drawLine(28, 53, 28, 54, matrix.Color333(2, 2, 2));
+    if(whitePress == 0){
+      lives = 3;
+      points = 0;
+      color = 0;
+      prevColor = 4;        
+      a=1;
+      started=1;
+      prevColor = -1;
+      matrix.fillRect(0, 0, 32, 8, matrix.Color333(0, 0, 0));
+      matrix.drawLine(1, 4, 1, 4, matrix.Color333(2, 0, 0));
+      matrix.drawLine(2, 3, 2, 5, matrix.Color333(2, 0, 0));
+      matrix.drawLine(3, 4, 3, 6, matrix.Color333(2, 0, 0));
+      matrix.drawLine(4, 3, 4, 5, matrix.Color333(2, 0, 0));
+      matrix.drawLine(5, 4, 5, 4, matrix.Color333(2, 0, 0));
+      matrix.drawLine(7, 4, 7, 4, matrix.Color333(2, 0, 0));
+      matrix.drawLine(8, 3, 8, 5, matrix.Color333(2, 0, 0));
+      matrix.drawLine(9, 4, 9, 6, matrix.Color333(2, 0, 0));
+      matrix.drawLine(10, 3, 10, 5, matrix.Color333(2, 0, 0));
+      matrix.drawLine(11, 4, 11, 4, matrix.Color333(2, 0, 0));
+      matrix.drawLine(13, 4, 13, 4, matrix.Color333(2, 0, 0));
+      matrix.drawLine(14, 3, 14, 5, matrix.Color333(2, 0, 0));
+      matrix.drawLine(15, 4, 15, 6, matrix.Color333(2, 0, 0));
+      matrix.drawLine(16, 3, 16, 5, matrix.Color333(2, 0, 0));
+      matrix.drawLine(17, 4, 17, 4, matrix.Color333(2, 0, 0));
+      matrix.drawLine(0, 8, 32, 8, matrix.Color333(2, 2, 2));
+      matrix.setTextSize(1);
+      matrix.setTextWrap(false);
+      matrix.setCursor(20, 1);
+      uint8_t w = 0;
+      str = points;
+      for (w=0; w<13; w++) {
+        matrix.setTextColor(matrix.Color333(2, 2, 2));
+        matrix.print(str[w]);
+      }
+    }
+    delay(40);
+    matrix.drawLine(8, 51, 10, 53, matrix.Color333(2, 2, 2));
+    matrix.drawLine(10, 54, 8, 56, matrix.Color333(2, 2, 2));
+
+    matrix.drawLine(21, 53, 23, 51, matrix.Color333(2, 2, 2));
+    matrix.drawLine(21, 54, 23, 56, matrix.Color333(2, 2, 2));
+
+    matrix.drawLine(3, 53, 3, 54, matrix.Color333(0, 0, 0));
+    matrix.drawLine(7, 51, 7, 52, matrix.Color333(0, 0, 0));
+    matrix.drawLine(7, 55, 7, 56, matrix.Color333(0, 0, 0));
+
+    matrix.drawLine(28, 53, 28, 54, matrix.Color333(0, 0, 0));
+    matrix.drawLine(24, 51, 24, 52, matrix.Color333(0, 0, 0));
+    matrix.drawLine(24, 55, 24, 56, matrix.Color333(0, 0, 0));
+    delay(40);
+  }
+  loop();
+}
+void loop() {
+  //genereate and apply a random seed for each instance of input
+  seedGen = millis();
+  srand(seedGen);
+  for(b=0; b != 1; b=b){
+    color = 0 + (rand() % 4);
+    //check if we generated the previous color
+    if(color != prevColor){
+      b = 1;
+    }
+  }
+  uint8_t w = 0;
+  str = points;
+  matrix.fillRect(20, 0, 32, 8, matrix.Color333(0, 0, 0));
+  matrix.setCursor(20, 1);
+  if (points < 10){
+    matrix.setCursor(26, 1);
+  }
+  if (points > 99){
+    matrix.setCursor(14, 1);
+    matrix.fillRect(14, 0, 32, 8, matrix.Color333(0, 0, 0));
+  }
+  Serial.println(points);
+  for (w=0; w<13; w++) {
+    matrix.setTextColor(matrix.Color333(2, 2, 2));
+    matrix.print(str[w]);
+  }
+  //set the screen to the selected color
+  if(color == 0){
+    matrix.fillRect(0, 9, 32, 63, matrix.Color333(0, 0, 2));
+  } else if(color == 1){
+    matrix.fillRect(0, 9, 32, 63, matrix.Color333(0, 2, 0));
+  } else if(color == 2){
+    matrix.fillRect(0, 9, 32, 63, matrix.Color333(1, 1, 0));
+  } else {
+    matrix.fillRect(0, 9, 32, 63, matrix.Color333(2, 0, 0));
+  }
+  timeSpent = 0;
+  row = true;
+  timeLimit = 8500 - 85*points;
+  lineToErase = 9;
+  timeToErase = 0;
+  if (timeLimit < 4250){
+    timeLimit = 4250;
+  }
+  for(b=0; b != 1; b=b){
+    getButtons();
+    if(color == buttonPress){
+      b=1;
+      points = points + 1;
+    } else if(buttonPress != -1 || timeSpent >= timeLimit){
+      b=1;
+      lives = lives - 1;
+      lifeCheck();
+    } 
+    timeSpent = timeSpent + 1;
+    timeToErase = timeToErase + 1;
+    if(timeLimit / timeToErase < 56){
+      matrix.drawLine(0, lineToErase, 32, lineToErase, matrix.Color333(0, 0, 0));
+      timeToErase = 0;
+      lineToErase = lineToErase + 1;
+    }
+   
+  }
+  prevColor = color;
+}
